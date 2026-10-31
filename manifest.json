@@ -1,0 +1,11 @@
+{
+  "author": "mnaoumov",
+  "authorUrl": "https://github.com/mnaoumov/",
+  "description": "Adds an Auto row height to Bases table views, so each row grows to fit its content like a Markdown table.",
+  "fundingUrl": "https://www.buymeacoffee.com/mnaoumov",
+  "id": "bases-auto-row-height",
+  "isDesktopOnly": false,
+  "minAppVersion": "1.14.5",
+  "name": "Bases Auto Row Height",
+  "version": "0.0.0"
+}
