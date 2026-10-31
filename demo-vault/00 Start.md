@@ -2,7 +2,7 @@
 
 This is an [Obsidian](https://obsidian.md/) vault that documents the [Bases Auto Row Height](https://github.com/mnaoumov/obsidian-bases-auto-row-height/) plugin by demonstrating it. Every feature has a note that says what it does and why you would want it, and a button you can press to watch it happen.
 
-Adds an Auto row height to Bases table views, so each row grows to fit its content like a Markdown table.
+`Bases Auto Row Height` adds **Auto** to the Row height of a Bases table view. With it, each row grows to fit its content, the way a row of a Markdown table does, instead of every row sharing one fixed height and cutting long text off.
 
 ## Your first minute
 
@@ -10,20 +10,20 @@ Below this paragraph is a **code button** — a captioned rectangle. It is not a
 
 ```code-button
 ---
-caption: Run the Sample command
+caption: Open the sample base
 ---
-require('/demoSetup.ts').runSampleCommand(app);
+await require('/demoSetup.ts').openSampleBase(app);
 ```
 
-A notice should have appeared in the top-right corner. That is the plugin's `Sample` command running — the same thing you get from **`Bases Auto Row Height`: Sample** in the Command Palette (`Ctrl+P` / `Cmd+P`).
+The table that opens has short rows for short summaries and tall rows for long ones, each wrapped in full.
 
-Every button in this vault also states its **manual equivalent**, so you learn the real steps rather than depending on the buttons.
+Every button in this vault also states its **manual equivalent**, so you learn the real steps rather than depending on the buttons. This one is: open [Projects](<./Materials/01 Auto row height/Projects.base>).
 
 ## Features
 
 | Note | What it covers |
 | --- | --- |
-| [01 Sample commands](<./01 Sample commands.md>) | The commands the plugin adds, and how to run them. |
+| [01 Auto row height](<./01 Auto row height.md>) | Turning Auto on for a table view, and what changes when it is on. |
 | [02 Settings](<./02 Settings.md>) | Every setting, by the key it is stored under in `data.json`. |
 
 ## Materials

@@ -1,0 +1,15 @@
+filters:
+  and:
+    - file.inFolder("Materials/01 Auto row height/Notes")
+views:
+  - type: table
+    name: Projects
+    order:
+      - file.name
+      - summary
+    sort:
+      - property: file.name
+        direction: ASC
+    columnSize:
+      note.summary: 260
+    rowHeight: auto
