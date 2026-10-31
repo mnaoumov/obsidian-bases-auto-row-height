@@ -13,11 +13,12 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   protected override getSettingDefinitionItems(): SettingDefinitionItem[] {
     return [
       this.settingEx({
-        desc: 'Text setting description.',
-        name: 'Text setting name',
+        desc: 'The most rows a table with the Auto row height may have and still fit its rows to their content. A table with more rows keeps fixed-height rows, because fitting renders every row at once.',
+        name: 'Maximum rows',
         render: (setting) => {
-          setting.addText((text) => {
-            this.bind({ propertyName: 'textSetting', valueComponent: text });
+          setting.addNumber(($number) => {
+            $number.setMin(1);
+            this.bind({ propertyName: 'maxRows', valueComponent: $number });
           });
         }
       })

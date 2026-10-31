@@ -15,4 +15,7 @@ import process from 'node:process';
 //   configInterfaces: [{ interfaceName: 'PluginSettings', sourcePath: 'src/plugin-settings.ts' }],
 //   rootFolder: getRootFolder() ?? process.cwd()
 // });
-registerDemoVaultCoverageSuite({ rootFolder: getRootFolder() ?? process.cwd() });
+registerDemoVaultCoverageSuite({
+  configInterfaces: [{ interfaceName: 'PluginSettings', sourcePath: 'src/plugin-settings.ts' }],
+  rootFolder: getRootFolder() ?? process.cwd()
+});
