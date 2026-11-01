@@ -42,7 +42,7 @@ The table view is virtualized from one fixed row height `H = --bases-table-row-h
 
 ### Internals and typings
 
-The table view, its rows, groups and registrations are typed in `obsidian-typings` (`BasesTableView`, `BasesTableViewRegistration`, `BasesPluginInstance`). One gap: `isGroupCollapsed` is typed for `BasesQueryResultGroup`, while Obsidian passes the entries of `data.groupedData`; the helper in the component casts and carries a `TODO` until the typings are fixed.
+The table view, its rows, groups and registrations are typed in `obsidian-typings` (`BasesTableView`, `BasesTableViewRegistration`, `BasesPluginInstance`), including `isGroupCollapsed`, which takes the `BasesEntryGroup` entries of `data.groupedData`.
 
 Verified against `app.js` of Obsidian 1.14.5 and catalyst 1.15.0.
 

@@ -8,7 +8,6 @@ import type {
 import type {
   App,
   BasesAllOptions,
-  BasesEntryGroup,
   BasesViewConfig,
   QueryController
 } from 'obsidian';
@@ -139,7 +138,7 @@ export class AutoRowHeightComponent extends Component {
     for (let groupIndex = activeCell.groupIdx; groupIndex >= 0 && groupIndex < groupedData.length; groupIndex += step) {
       const group = groupedData[groupIndex];
       const tops = state.tops[groupIndex];
-      if (!group || !tops || (groupIndex !== activeCell.groupIdx && isGroupCollapsed(view, group))) {
+      if (!group || !tops || (groupIndex !== activeCell.groupIdx && view.isGroupCollapsed(group))) {
         continue;
       }
       const rowHeights = tops.slice(1).map((bottom, index) => bottom - ensureNonNullable(tops[index]));
@@ -258,7 +257,7 @@ export class AutoRowHeightComponent extends Component {
     const groupGap = Number.parseFloat(containerEl.getCssPropertyValue('--bases-table-group-gap')) || DEFAULT_GROUP_GAP_IN_PIXELS;
     const { groupedData } = view.data;
     const rowsByEntry = new Map(view.rows.map((row) => [row.entry, row]));
-    const groupRows = groupedData.map((group) => isGroupCollapsed(view, group) ? [] : group.entries.map((entry) => rowsByEntry.get(entry)));
+    const groupRows = groupedData.map((group) => view.isGroupCollapsed(group) ? [] : group.entries.map((entry) => rowsByEntry.get(entry)));
 
     // Write every row's auto height, then read every height, then write the layout, so the browser lays out once.
     for (const rows of groupRows) {
@@ -413,12 +412,6 @@ function addAutoOption(options: BasesAllOptions[]): BasesAllOptions[] {
 function isEditableTarget(target: EventTarget | null): boolean {
   return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement
     || (target instanceof HTMLElement && target.isContentEditable);
-}
-
-function isGroupCollapsed(view: BasesTableView, group: BasesEntryGroup): boolean {
-  // TODO: Pass the group straight through once obsidian-typings types `isGroupCollapsed` for the entries of
-  // `data.groupedData`, which is what Obsidian itself passes.
-  return view.isGroupCollapsed(castTo<Parameters<BasesTableView['isGroupCollapsed']>[0]>(group));
 }
 
 function measureRow(row: BasesTableRow, minRowHeight: number): number {
