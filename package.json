@@ -49,7 +49,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
-    "@mnaoumov/obsidian-dev-toolkit": "^8.0.0",
+    "@mnaoumov/obsidian-dev-toolkit": "^8.2.1",
     "@mnaoumov/obsidian-lib": "^10.5.0",
     "@mnaoumov/typescript-dev-toolkit": "^6.0.1",
     "@mnaoumov/typescript-lib": "^2.0.0",
@@ -69,7 +69,7 @@
     "markdownlint-cli2": "^0.24.0",
     "nano-staged": "^1.0.2",
     "obsidian": "^1.14.4",
-    "obsidian-integration-testing": "^17.7.4",
+    "obsidian-integration-testing": "^17.9.0",
     "obsidian-test-mocks": "^7.3.0",
     "sass-embedded": "^1.107.1",
     "tslib": "^2.9.1",
