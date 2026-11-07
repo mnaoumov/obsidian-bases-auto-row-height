@@ -83,6 +83,11 @@ interface FakeRow {
   readonly entry: FakeEntry;
 }
 
+interface FakeScroll {
+  readonly left: number;
+  readonly top: number;
+}
+
 interface FakeTableGroup {
   readonly selfHeight: number;
   readonly tableEl: HTMLElement;
@@ -141,6 +146,8 @@ class FakeTableView {
   public data: FakeData | undefined;
   public groups: FakeTableGroup[] = [];
   public isInDocument = false;
+  public lastScroll: FakeScroll = { left: 0, top: 0 };
+  public pendingScroll: FakeScroll | null = null;
   public rows: FakeRow[] = [];
   public readonly scrollEl: HTMLElement;
   public selection: BasesTableSelection | null = null;
@@ -213,6 +220,17 @@ class FakeTableView {
     });
     this.unusedRows = previousRows.filter((row) => !this.rows.includes(row));
     this.containerEl.setCssStyles({ height: 'native' });
+    // The native restore works in fractions of its own fixed-height container, and the browser clamps the
+    // Offset to that height.
+    const nativeHeight = this.data.groupedData.reduce((sum, group) => sum + group.entries.length * height, 0);
+    this.scrollEl.scrollTop = Math.min(this.scrollEl.scrollTop, nativeHeight);
+    if (this.pendingScroll) {
+      this.scrollEl.scrollTop = Math.min(nativeHeight * this.pendingScroll.top, nativeHeight);
+      this.lastScroll = this.pendingScroll;
+      this.pendingScroll = null;
+    } else {
+      this.lastScroll = { left: this.lastScroll.left, top: nativeHeight > 0 ? this.scrollEl.scrollTop / nativeHeight : 0 };
+    }
   }
 }
 
@@ -397,6 +415,34 @@ describe('AutoRowHeightComponent', () => {
     empty.data = undefined;
     empty.updateVirtualDisplay();
     expect(empty.updateCount).toBe(0);
+  });
+
+  it('records and restores the scroll against the laid-out height, not the fixed-height one', () => {
+    fixture.component.load();
+    // Three 100px rows: 300px laid out, 90px natively.
+    const view = createView([{ entries: makeEntries(100, 100, 100) }]);
+    view.updateVirtualDisplay();
+    expect(view.containerEl.style.height).toBe('320px');
+
+    view.scrollEl.scrollTop = 160;
+    view.updateVirtualDisplay();
+    expect(view.lastScroll).toStrictEqual({ left: 0, top: 0.5 });
+
+    // A data update: the view restores its last scroll, which natively clamps to 90px.
+    view.pendingScroll = view.lastScroll;
+    view.updateVirtualDisplay();
+    expect(view.scrollEl.scrollTop).toBe(160);
+    expect(view.lastScroll).toStrictEqual({ left: 0, top: 0.5 });
+    expect(view.pendingScroll).toBeNull();
+  });
+
+  it('leaves the scroll of an empty Auto table to the view', () => {
+    fixture.component.load();
+    const view = createView([]);
+    view.pendingScroll = { left: 0, top: 0.5 };
+    view.updateVirtualDisplay();
+    expect(view.scrollEl.scrollTop).toBe(0);
+    expect(view.lastScroll).toStrictEqual({ left: 0, top: 0.5 });
   });
 
   it('skips the layout of a table that is not shown', () => {
