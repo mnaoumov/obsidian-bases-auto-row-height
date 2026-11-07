@@ -22,9 +22,11 @@ The repo was generated on 2026-10-31 with `create-obsidian-plugin` (preset `all-
 
 **Tests:** unit tests at 100% coverage. `auto-row-height.cross-platform.integration.test.ts` checks the layout (no overlaps, gaps or clipped cells), the Auto option, click hit-testing, late content, a scroll past the fixed-height bottom that holds through a redraw and a data update, the way back to Short and the row cap. `page-keys.desktop.integration.test.ts` checks PageUp and PageDown. Both pass on desktop against Obsidian 1.15.0 (public) and 1.15.1 (catalyst), and the cross-platform test passes on the Android emulator against Obsidian 1.15.0 (2026-11-07).
 
-**Screenshots:** `src/screenshots.desktop-capture.integration.test.ts` writes `images/screenshots/screenshot-desktop-1.png` (the sample base on Auto) and `-2.png` (the same table on Short). Re-run it with `npm run capture:screenshots` after a UI change; no standard test project collects it. There are no mobile shots yet.
+**Screenshots:** `src/screenshots.desktop-capture.integration.test.ts` writes `images/screenshots/screenshot-desktop-1.png` (the sample base on Auto) and `-2.png` (the same table on Short). `src/screenshots.android-capture.integration.test.ts` writes `screenshot-mobile-1.png` and `-2.png`, the same two frames, on the 900x1600 `obsidian_screenshots` AVD (project `capture-screenshots:android`). `npm run capture:screenshots` runs desktop, then Android; no standard test project collects either.
 
-**Not yet:** mobile screenshots, the first release and the directory listing.
+The screenshot AVD must run an Obsidian at or above `minAppVersion`. On 1.13.6 the table view has no `isGroupCollapsed`, the layout throws, and the Auto shot times out on one fixed height. Upgrade it with `provision-obsidian-avd.ps1 -AvdName obsidian_screenshots -ApkPath <apk>`; it carries 1.15.0 since 2026-11-07. Short on a phone really does draw 30 px rows with vertically tight text, with or without the plugin, so shot 2 is the native view and not a capture glitch.
+
+**Not yet:** the first release and the directory listing.
 
 ## Design
 
