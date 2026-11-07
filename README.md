@@ -13,7 +13,11 @@ A Bases table gives every row one fixed height: Short cuts long values off mid-s
 <details>
 <summary>More screenshots</summary>
 
+<div>
 <a href="https://github.com/mnaoumov/obsidian-bases-auto-row-height/blob/HEAD/images/screenshots/screenshot-desktop-2.png"><img src="images/screenshots/screenshot-desktop-2.png" alt="Without Auto: one fixed height cuts long text off" width="600"></a>
+<a href="https://github.com/mnaoumov/obsidian-bases-auto-row-height/blob/HEAD/images/screenshots/screenshot-mobile-1.png"><img src="images/screenshots/screenshot-mobile-1.png" alt="Auto: every row is as tall as its content" width="270"></a>
+<a href="https://github.com/mnaoumov/obsidian-bases-auto-row-height/blob/HEAD/images/screenshots/screenshot-mobile-2.png"><img src="images/screenshots/screenshot-mobile-2.png" alt="Without Auto: one fixed height cuts long text off" width="270"></a>
+</div>
 
 </details>
 
