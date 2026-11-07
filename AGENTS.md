@@ -20,9 +20,11 @@ The repo was generated on 2026-10-31 with `create-obsidian-plugin` (preset `all-
 
 **Built:** `src/auto-row-height/auto-row-height-component.ts` (the patches), `row-layout.ts` (pure row arithmetic), `visible-height.ts` (the page height), the `maxRows` setting, and a demo vault around one sample base.
 
-**Tests:** unit tests at 100% coverage. `auto-row-height.cross-platform.integration.test.ts` checks the layout (no overlaps, gaps or clipped cells), the Auto option, click hit-testing, late content, a scroll past the fixed-height bottom that holds through a redraw and a data update, the way back to Short and the row cap. `page-keys.desktop.integration.test.ts` checks PageUp and PageDown. Both pass on desktop against Obsidian 1.15.0, and the cross-platform test passes on the Android emulator against Obsidian 1.15.0 (2026-11-07).
+**Tests:** unit tests at 100% coverage. `auto-row-height.cross-platform.integration.test.ts` checks the layout (no overlaps, gaps or clipped cells), the Auto option, click hit-testing, late content, a scroll past the fixed-height bottom that holds through a redraw and a data update, the way back to Short and the row cap. `page-keys.desktop.integration.test.ts` checks PageUp and PageDown. Both pass on desktop against Obsidian 1.15.0 (public) and 1.15.1 (catalyst), and the cross-platform test passes on the Android emulator against Obsidian 1.15.0 (2026-11-07).
 
-**Not yet:** the README, the release and the directory listing.
+**Screenshots:** `src/screenshots.desktop-capture.integration.test.ts` writes `images/screenshots/screenshot-desktop-1.png` (the sample base on Auto) and `-2.png` (the same table on Short). Re-run it with `npm run capture:screenshots` after a UI change; no standard test project collects it. There are no mobile shots yet.
+
+**Not yet:** mobile screenshots, the first release and the directory listing.
 
 ## Design
 
