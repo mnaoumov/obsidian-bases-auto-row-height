@@ -22,7 +22,7 @@ The repo was generated on 2026-10-31 with `create-obsidian-plugin` (preset `all-
 
 **Tests:** unit tests at 100% coverage. `auto-row-height.cross-platform.integration.test.ts` checks the layout (no overlaps, gaps or clipped cells), the Auto option, click hit-testing, late content, the way back to Short and the row cap. `page-keys.desktop.integration.test.ts` checks PageUp and PageDown. Both pass on desktop against Obsidian 1.15.0.
 
-**Not yet:** the Android run (the local test emulator carries Obsidian 1.13.6, which predates Bases group folding and this plugin's `minAppVersion`), the README, the release and the directory listing.
+**Not yet:** the Android run (the local test emulator now carries Obsidian 1.15.0, but on 2026-11-06 the emulator did not finish booting within its 10-minute budget under machine load, so no Android test has run yet), the README, the release and the directory listing.
 
 ## Design
 
