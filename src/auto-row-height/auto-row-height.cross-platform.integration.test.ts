@@ -28,6 +28,12 @@ interface GrowthResult {
   readonly before: number;
 }
 
+interface ScrollResult {
+  readonly after: number;
+  readonly before: number;
+  readonly bottom: number;
+}
+
 interface TableState {
   readonly clippedCellCount: number;
   readonly containerHeight: number;
@@ -143,7 +149,16 @@ describe('auto row height', () => {
             throw new Error('No cell in the target row.');
           }
           cellEl.scrollIntoView({ block: 'center' });
-          await waitUntil({ predicate: () => cellEl.getBoundingClientRect().top >= 0, timeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS });
+          // The cell is on screen once the point at its center hit-tests to it; `top >= 0` alone already holds for a cell below
+          // The viewport, before any scroll, which on a phone's short viewport left the tap pointing at nothing.
+          await waitUntil({
+            predicate: () => {
+              const rect = cellEl.getBoundingClientRect();
+              const hit = cellEl.doc.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+              return hit !== null && cellEl.contains(hit);
+            },
+            timeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS
+          });
           await clickElement({ element: cellEl });
           await waitUntil({ predicate: () => view.activeCell?.row === TARGET_ROW, timeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS });
           return {
@@ -155,6 +170,29 @@ describe('auto row height', () => {
       });
       expect(clicked.activeRow).toBe(30);
       expect(Math.abs(clicked.overlayDelta)).toBeLessThanOrEqual(1);
+
+      // A scroll past the bottom of the fixed-height table must hold, through the redraw the scroll itself
+      // Causes and through a data update, which restores the view's last scroll. Both were clamped to the
+      // Fixed height, so the table jumped back.
+      const scrollAfterUpdate = await evalInObsidian({
+        async callback({ app }): Promise<ScrollResult> {
+          const SETTLE_DELAY_IN_MILLISECONDS = 500;
+          // eslint-disable-next-line no-restricted-syntax -- A closure runs inside Obsidian, where no cast helper can be imported, and the leaf's `View` shares no members with the Bases view it holds.
+          const view = (app.workspace.getMostRecentLeaf()?.view as unknown as TableViewHost).controller.view;
+          // The bottom of the laid-out table is past the bottom of the fixed-height one.
+          view.scrollEl.scrollTop = view.scrollEl.scrollHeight;
+          await sleep(SETTLE_DELAY_IN_MILLISECONDS);
+          const before = view.scrollEl.scrollTop;
+          const bottom = view.scrollEl.scrollHeight - view.scrollEl.clientHeight;
+          view.onDataUpdated();
+          await sleep(SETTLE_DELAY_IN_MILLISECONDS);
+          return { after: view.scrollEl.scrollTop, before, bottom };
+        },
+        vaultPath
+      });
+      // The scroll stays at the bottom: through the update the scroll itself causes, then through a data update.
+      expect(Math.abs(scrollAfterUpdate.before - scrollAfterUpdate.bottom)).toBeLessThanOrEqual(1);
+      expect(Math.abs(scrollAfterUpdate.after - scrollAfterUpdate.before)).toBeLessThanOrEqual(1);
 
       // Content that renders after the layout, such as an image, grows its cell; the row follows it.
       const grown = await evalInObsidian({

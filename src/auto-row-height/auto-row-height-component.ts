@@ -78,6 +78,23 @@ const FLOOR_MARGIN_IN_ROWS = 0.5;
 const TABLE_VIEW_TYPE = 'table';
 
 /**
+ * A scroll position as fractions of the table container's height and width.
+ */
+interface TableViewScrollFraction {
+  readonly left: number;
+  readonly top: number;
+}
+
+/**
+ * The scroll members of the table view, which `obsidian-typings` does not declare yet.
+ */
+interface TableViewScrollState {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- The plugin rewrites the view's own record of its last scroll.
+  lastScroll: TableViewScrollFraction;
+  readonly pendingScroll: null | TableViewScrollFraction;
+}
+
+/**
  * Adds `Auto` to the Row height of every Bases table view and lays such a table out by its content.
  *
  * The table view is virtualized: it gives every row an absolute `top` of `index × H`, sizes each group by
@@ -251,7 +268,7 @@ export class AutoRowHeightComponent extends Component {
     return rowCount <= this.getSettings().maxRows;
   }
 
-  private layOut(view: BasesTableView, state: ViewState): void {
+  private layOut(view: BasesTableView, state: ViewState): number {
     const { containerEl } = view;
     const minRowHeight = view.getRowBaseHeight() * view.getRowHeightMult();
     const groupGap = Number.parseFloat(containerEl.getCssPropertyValue('--bases-table-group-gap')) || DEFAULT_GROUP_GAP_IN_PIXELS;
@@ -287,6 +304,7 @@ export class AutoRowHeightComponent extends Component {
 
     placeOverlays(view, tops);
     observeCells(view, state);
+    return containerHeight;
   }
 
   private patch(): void {
@@ -384,7 +402,14 @@ export class AutoRowHeightComponent extends Component {
       return;
     }
 
-    const { containerEl } = view;
+    const { containerEl, scrollEl } = view;
+    // While the original runs, the container has its fixed-height size, and the layout the plugin forces then
+    // Clamps the scroll offset to it, so the table jumped back on every update. The view also restores a pending
+    // Scroll, and records the last one, as fractions of that height. The plugin puts the offset back once the
+    // Laid-out height is in place, and redoes the vertical fractions against it.
+    const scrollState = castTo<TableViewScrollState>(view);
+    const { pendingScroll } = scrollState;
+    const { scrollTop } = scrollEl;
     Object.defineProperty(containerEl, 'closest', {
       configurable: true,
       value: (selector: string): Element | null => selector === PRINT_SELECTOR ? containerEl : Element.prototype.closest.call(containerEl, selector)
@@ -399,7 +424,18 @@ export class AutoRowHeightComponent extends Component {
       return;
     }
     containerEl.addClass(AUTO_ROW_HEIGHT_CLASS, MULTILINE_CLASS);
-    this.layOut(view, this.getState(view));
+    const containerHeight = this.layOut(view, this.getState(view));
+    if (containerHeight <= 0) {
+      return;
+    }
+    if (pendingScroll) {
+      scrollEl.scrollTop = containerHeight * pendingScroll.top;
+      return;
+    }
+    if (scrollEl.scrollTop !== scrollTop) {
+      scrollEl.scrollTop = scrollTop;
+    }
+    scrollState.lastScroll = { ...scrollState.lastScroll, top: scrollTop / containerHeight };
   }
 }
 

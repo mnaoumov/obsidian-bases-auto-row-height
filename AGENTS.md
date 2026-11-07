@@ -20,9 +20,9 @@ The repo was generated on 2026-10-31 with `create-obsidian-plugin` (preset `all-
 
 **Built:** `src/auto-row-height/auto-row-height-component.ts` (the patches), `row-layout.ts` (pure row arithmetic), `visible-height.ts` (the page height), the `maxRows` setting, and a demo vault around one sample base.
 
-**Tests:** unit tests at 100% coverage. `auto-row-height.cross-platform.integration.test.ts` checks the layout (no overlaps, gaps or clipped cells), the Auto option, click hit-testing, late content, the way back to Short and the row cap. `page-keys.desktop.integration.test.ts` checks PageUp and PageDown. Both pass on desktop against Obsidian 1.15.0.
+**Tests:** unit tests at 100% coverage. `auto-row-height.cross-platform.integration.test.ts` checks the layout (no overlaps, gaps or clipped cells), the Auto option, click hit-testing, late content, a scroll past the fixed-height bottom that holds through a redraw and a data update, the way back to Short and the row cap. `page-keys.desktop.integration.test.ts` checks PageUp and PageDown. Both pass on desktop against Obsidian 1.15.0, and the cross-platform test passes on the Android emulator against Obsidian 1.15.0 (2026-11-07).
 
-**Not yet:** the Android run (the local test emulator now carries Obsidian 1.15.0, but on 2026-11-06 the emulator did not finish booting within its 10-minute budget under machine load, so no Android test has run yet), the README, the release and the directory listing.
+**Not yet:** the README, the release and the directory listing.
 
 ## Design
 
@@ -38,11 +38,12 @@ The table view is virtualized from one fixed row height `H = --bases-table-row-h
 4. **The view's row arithmetic is corrected** from the stored per-group row tops: `getCellRect` (scroll-into-view), `getClosestCellIndexWithinGroup` (click and drag hit-testing), and the active-cell and selection overlays.
 5. **PageUp and PageDown.** The view pages by `Math.floor(pageHeight / H)` rows inside its own keydown listener. A capture listener on the view's `scrollEl` counts how many real rows fit one page and, for the view's next single `getRowHeightMult` call (a `once` patch on the instance), returns the multiplier that makes that floor come out at the count. The page height follows the view's own viewport helper (`visible-height.ts`).
 6. **Late content.** One `ResizeObserver` per table watches every `.bases-table-cell`. The plugin's CSS lets a cell grow past its row (`height: auto; min-height: 100%; align-self: flex-start`), so a cell whose content renders after the layout (markdown, an image) outgrows its row, and the table is laid out again on the next animation frame. A shrinking cell is caught by the data update that follows the edit.
-7. **The row cap.** A table with more rows than `maxRows` (default 500) keeps the native layout, because an Auto table renders every row on every `updateVirtualDisplay`, including the ones the view runs on scroll.
+7. **The scroll offset.** While the original call runs, the container has its fixed height, and the layout the plugin's read pass forces clamps `scrollEl.scrollTop` to it. Every redraw, including the one each scroll triggers, would pull a scroll past the fixed-height bottom back to it. So the plugin reads `scrollTop` before the call and writes it back after the restack. The view also records its scroll (`lastScroll`) and restores it on a data update (`pendingScroll`, set by `onDataUpdated` and `setEphemeralState`) as fractions of the fixed height. The plugin records the vertical fraction against the laid-out height, and applies a pending one against it.
+8. **The row cap.** A table with more rows than `maxRows` (default 500) keeps the native layout, because an Auto table renders every row on every `updateVirtualDisplay`, including the ones the view runs on scroll.
 
 ### Internals and typings
 
-The table view, its rows, groups and registrations are typed in `obsidian-typings` (`BasesTableView`, `BasesTableViewRegistration`, `BasesPluginInstance`), including `isGroupCollapsed`, which takes the `BasesEntryGroup` entries of `data.groupedData`.
+The table view, its rows, groups and registrations are typed in `obsidian-typings` (`BasesTableView`, `BasesTableViewRegistration`, `BasesPluginInstance`), including `isGroupCollapsed`, which takes the `BasesEntryGroup` entries of `data.groupedData`. `lastScroll` and `pendingScroll` are not typed there yet, so the component declares them locally (`TableViewScrollState`).
 
 Verified against `app.js` of Obsidian 1.14.5 and catalyst 1.15.0.
 
