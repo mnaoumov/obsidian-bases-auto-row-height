@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.0.0
+
+- docs(readme): link the changelog after the first release
+
 ## 0.1.0
 
 - test(screenshots): add the mobile capture suite and shots

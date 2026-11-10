@@ -1,6 +1,6 @@
 {
   "name": "bases-auto-row-height",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Adds an Auto row height to Bases table views, so each row grows to fit its content like a Markdown table.",
   "type": "module",
   "main": "main.js",
