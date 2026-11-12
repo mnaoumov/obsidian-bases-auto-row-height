@@ -46,6 +46,8 @@ interface AutoRowHeightComponentConstructorParams {
 }
 
 interface ViewState {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Every layout replaces the container height.
+  containerHeight: number;
   // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- The pending frame is set and cleared as resizes come in.
   frame: number;
   readonly keydownHandler: (event_: KeyboardEvent) => void;
@@ -193,6 +195,7 @@ export class AutoRowHeightComponent extends Component {
       };
       view.scrollEl.addEventListener('keydown', keydownHandler, { capture: true });
       state = {
+        containerHeight: 0,
         frame: 0,
         keydownHandler,
         observedCells: new Set(),
@@ -300,6 +303,7 @@ export class AutoRowHeightComponent extends Component {
       containerHeight += group.selfHeight + groupHeight + (groupIndex < measuredGroups.length - 1 ? groupGap : 0);
     }
     state.tops = tops;
+    state.containerHeight = containerHeight;
     containerEl.style.height = `${String(containerHeight)}px`;
 
     placeOverlays(view, tops);
@@ -395,13 +399,7 @@ export class AutoRowHeightComponent extends Component {
     this.refresh();
   }
 
-  private updateVirtualDisplay(view: BasesTableView, fallback: () => void): void {
-    if (!this.isAutoView(view)) {
-      this.detachView(view);
-      fallback();
-      return;
-    }
-
+  private updateAutoVirtualDisplay(view: BasesTableView, fallback: () => void): void {
     const { containerEl, scrollEl } = view;
     // While the original runs, the container has its fixed-height size, and the layout the plugin forces then
     // Clamps the scroll offset to it, so the table jumped back on every update. The view also restores a pending
@@ -436,6 +434,29 @@ export class AutoRowHeightComponent extends Component {
       scrollEl.scrollTop = scrollTop;
     }
     scrollState.lastScroll = { ...scrollState.lastScroll, top: scrollTop / containerHeight };
+  }
+
+  private updateVirtualDisplay(view: BasesTableView, fallback: () => void): void {
+    if (!this.isAutoView(view)) {
+      this.detachView(view);
+      fallback();
+      return;
+    }
+
+    const { containerEl } = view;
+    // While the original runs, the container shrinks to its fixed height, and the layout the plugin forces then
+    // Clamps every scroller above it: in a note that embeds the table, the editor's own scroller, which the
+    // Plugin does not own. So the container keeps its last laid-out height as a minimum until the new layout is
+    // In place.
+    const previousHeight = this.viewStates.get(view)?.containerHeight ?? 0;
+    if (previousHeight > 0) {
+      containerEl.style.minHeight = `${String(previousHeight)}px`;
+    }
+    try {
+      this.updateAutoVirtualDisplay(view, fallback);
+    } finally {
+      containerEl.style.removeProperty('min-height');
+    }
   }
 }
 
