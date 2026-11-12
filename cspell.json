@@ -50,6 +50,7 @@
     "postcss",
     "preact",
     "rescanning",
+    "scroller",
     "smol",
     "svelte",
     "tailwindcss",

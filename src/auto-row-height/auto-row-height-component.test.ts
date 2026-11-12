@@ -147,6 +147,7 @@ class FakeTableView {
   public groups: FakeTableGroup[] = [];
   public isInDocument = false;
   public lastScroll: FakeScroll = { left: 0, top: 0 };
+  public minHeightDuringUpdate = '';
   public pendingScroll: FakeScroll | null = null;
   public rows: FakeRow[] = [];
   public readonly scrollEl: HTMLElement;
@@ -191,6 +192,7 @@ class FakeTableView {
       return;
     }
     this.updateCount++;
+    this.minHeightDuringUpdate = this.containerEl.style.minHeight;
     const isPrint = this.containerEl.closest('.print') !== null;
     this.isInDocument = this.containerEl.closest('body') !== null;
     const height = BASE_ROW_HEIGHT * this.getRowHeightMult();
@@ -434,6 +436,25 @@ describe('AutoRowHeightComponent', () => {
     expect(view.scrollEl.scrollTop).toBe(160);
     expect(view.lastScroll).toStrictEqual({ left: 0, top: 0.5 });
     expect(view.pendingScroll).toBeNull();
+  });
+
+  it('keeps the container at its laid-out height while the view redraws, so no scroller above it is clamped', () => {
+    fixture.component.load();
+    const view = createView([{ entries: makeEntries(100, 100, 100) }]);
+    view.updateVirtualDisplay();
+    // The first layout has no earlier height to keep.
+    expect(view.minHeightDuringUpdate).toBe('');
+    expect(view.containerEl.style.minHeight).toBe('');
+
+    view.updateVirtualDisplay();
+    expect(view.minHeightDuringUpdate).toBe('320px');
+    expect(view.containerEl.style.minHeight).toBe('');
+
+    // The minimum goes even when the table is not shown and no layout follows.
+    view.shown = false;
+    view.updateVirtualDisplay();
+    expect(view.minHeightDuringUpdate).toBe('320px');
+    expect(view.containerEl.style.minHeight).toBe('');
   });
 
   it('leaves the scroll of an empty Auto table to the view', () => {
