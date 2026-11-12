@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 1.0.1
+
+- docs(agents): record the Obsidian version the embed scroll test ran on
+- fix(auto-row-height): scroll an embedded Auto table past its fixed-height bottom
+
 ## 1.0.0
 
 - docs(readme): link the changelog after the first release
