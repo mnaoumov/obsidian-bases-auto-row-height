@@ -47,7 +47,7 @@ The table view is virtualized from one fixed row height `H = --bases-table-row-h
 
 ### Internals and typings
 
-The table view, its rows, groups and registrations are typed in `obsidian-typings` (`BasesTableView`, `BasesTableViewRegistration`, `BasesPluginInstance`), including `isGroupCollapsed`, which takes the `BasesEntryGroup` entries of `data.groupedData`. `lastScroll` and `pendingScroll` are not typed there yet, so the component declares them locally (`TableViewScrollState`).
+The table view, its rows, groups and registrations are typed in `obsidian-typings` (`BasesTableView`, `BasesTableViewRegistration`, `BasesPluginInstance`), including `isGroupCollapsed`, which takes the `BasesEntryGroup` entries of `data.groupedData`, and the scroll records `lastScroll` and `pendingScroll` (`BasesTableScrollPosition`).
 
 Verified against `app.js` of Obsidian 1.14.5 and catalyst 1.15.0.
 

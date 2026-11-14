@@ -80,23 +80,6 @@ const FLOOR_MARGIN_IN_ROWS = 0.5;
 const TABLE_VIEW_TYPE = 'table';
 
 /**
- * A scroll position as fractions of the table container's height and width.
- */
-interface TableViewScrollFraction {
-  readonly left: number;
-  readonly top: number;
-}
-
-/**
- * The scroll members of the table view, which `obsidian-typings` does not declare yet.
- */
-interface TableViewScrollState {
-  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- The plugin rewrites the view's own record of its last scroll.
-  lastScroll: TableViewScrollFraction;
-  readonly pendingScroll: null | TableViewScrollFraction;
-}
-
-/**
  * Adds `Auto` to the Row height of every Bases table view and lays such a table out by its content.
  *
  * The table view is virtualized: it gives every row an absolute `top` of `index × H`, sizes each group by
@@ -405,8 +388,7 @@ export class AutoRowHeightComponent extends Component {
     // Clamps the scroll offset to it, so the table jumped back on every update. The view also restores a pending
     // Scroll, and records the last one, as fractions of that height. The plugin puts the offset back once the
     // Laid-out height is in place, and redoes the vertical fractions against it.
-    const scrollState = castTo<TableViewScrollState>(view);
-    const { pendingScroll } = scrollState;
+    const { pendingScroll } = view;
     const { scrollTop } = scrollEl;
     Object.defineProperty(containerEl, 'closest', {
       configurable: true,
@@ -433,7 +415,7 @@ export class AutoRowHeightComponent extends Component {
     if (scrollEl.scrollTop !== scrollTop) {
       scrollEl.scrollTop = scrollTop;
     }
-    scrollState.lastScroll = { ...scrollState.lastScroll, top: scrollTop / containerHeight };
+    view.lastScroll = { ...view.lastScroll, top: scrollTop / containerHeight };
   }
 
   private updateVirtualDisplay(view: BasesTableView, fallback: () => void): void {

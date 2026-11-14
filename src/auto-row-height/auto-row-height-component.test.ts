@@ -3,6 +3,7 @@ import type {
   BasesPluginInstance,
   BasesTableCellIndex,
   BasesTableRect,
+  BasesTableScrollPosition,
   BasesTableSelection
 } from '@obsidian-typings/obsidian-public-latest';
 import type {
@@ -83,11 +84,6 @@ interface FakeRow {
   readonly entry: FakeEntry;
 }
 
-interface FakeScroll {
-  readonly left: number;
-  readonly top: number;
-}
-
 interface FakeTableGroup {
   readonly selfHeight: number;
   readonly tableEl: HTMLElement;
@@ -146,9 +142,9 @@ class FakeTableView {
   public data: FakeData | undefined;
   public groups: FakeTableGroup[] = [];
   public isInDocument = false;
-  public lastScroll: FakeScroll = { left: 0, top: 0 };
+  public lastScroll: BasesTableScrollPosition = { left: 0, top: 0 };
   public minHeightDuringUpdate = '';
-  public pendingScroll: FakeScroll | null = null;
+  public pendingScroll: BasesTableScrollPosition | null = null;
   public rows: FakeRow[] = [];
   public readonly scrollEl: HTMLElement;
   public selection: BasesTableSelection | null = null;
