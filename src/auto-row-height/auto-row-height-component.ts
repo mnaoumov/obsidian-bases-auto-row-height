@@ -12,12 +12,12 @@ import type {
   QueryController
 } from 'obsidian';
 
+import { ComponentEx } from '@mnaoumov/obsidian-lib/components/component-ex';
 import { CorePluginToggleComponent } from '@mnaoumov/obsidian-lib/components/core-plugin-toggle-component';
 import { MonkeyAroundComponent } from '@mnaoumov/obsidian-lib/components/monkey-around-component';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
 import { InternalPluginName } from '@obsidian-typings/obsidian-public-latest/implementations';
-import { Component } from 'obsidian';
 
 import type { GroupRowTops } from './row-layout.ts';
 
@@ -98,7 +98,7 @@ const TABLE_VIEW_TYPE = 'table';
  * keeps the native layout. A base file that says `rowHeight: auto` still opens without the plugin: the view
  * reads any unknown value as Short.
  */
-export class AutoRowHeightComponent extends Component {
+export class AutoRowHeightComponent extends ComponentEx {
   private readonly app: App;
   private readonly getSettings: () => AutoRowHeightSettings;
   private patchComponent: MonkeyAroundComponent | null = null;
