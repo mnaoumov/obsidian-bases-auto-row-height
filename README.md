@@ -52,8 +52,9 @@ A copy of the vault ships with every release. You can access it via any of the f
 | [`Bases Style Enhancer`](https://community.obsidian.md/plugins/bases-style-enhancer) | changes the font size of Bases table views | Unrelated to row height; the two can be combined |
 | [`Bases Wrap Text`](https://community.obsidian.md/plugins/bases-wrap-text) | a Wrap Text toggle for Bases table views | Same goal as: it wraps within the fixed Medium, Tall or Extra tall height, so every row stays the same height; this plugin gives each row its own height |
 | [`Extended Base`](https://community.obsidian.md/plugins/extended-base) | its own table view with per-column wrap, top-aligned cells, transparent background | Same goal as: a replacement view; this plugin keeps the core table view, its editing and its keyboard model |
+| [`Nebula Focus`](https://community.obsidian.md/plugins/nebula-focus) | a workspace restyle for Markdown and Bases; compact tables with a content row height; colored tags; inline editing | Covers part of: its row height comes with a whole workspace restyle; this plugin only adds Auto to the core table view and changes nothing else |
 
-Last searched for similar plugins on 2026-11-07.
+Last searched for similar plugins on 2026-11-24.
 
 ## Installation
 
