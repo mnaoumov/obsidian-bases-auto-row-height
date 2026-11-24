@@ -26,7 +26,7 @@ The repo was generated on 2026-10-31 with `create-obsidian-plugin` (preset `all-
 
 The screenshot AVD must run an Obsidian at or above `minAppVersion`. On 1.13.6 the table view has no `isGroupCollapsed`, the layout throws, and the Auto shot times out on one fixed height. Upgrade it with `provision-obsidian-avd.ps1 -AvdName obsidian_screenshots -ApkPath <apk>`; it carries 1.15.0 since 2026-11-07. Short on a phone really does draw 30 px rows with vertically tight text, with or without the plugin, so shot 2 is the native view and not a capture glitch.
 
-**Released:** 0.1.0, the first release (2026-11-08), then 1.0.0 (2026-11-09); `CHANGELOG.md` lists every later one. **Not yet:** the directory listing.
+**Released:** 0.1.0, the first release (2026-11-08), then 1.0.0 (2026-11-09); `CHANGELOG.md` lists every later one. **Listed** in the community directory since 2026-11-24: <https://community.obsidian.md/plugins/bases-auto-row-height>, with the four screenshots uploaded and the demo-vault release asset overridden on its review page.
 
 ## Design
 
