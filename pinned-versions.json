@@ -36,6 +36,20 @@
       "manualCheck": "The check reads the range micromark-extension-math declares. When it admits 0.18.2 or later the override and this entry can both go.",
       "section": "overrides",
       "why": "Clears GHSA-238p-pmpm-9mq7 (KaTeX prototype pollution bypassing trust restrictions, >=0.11.0 <0.18.2), which also carried the advisories on micromark-extension-math and markdownlint. Reached only through @mnaoumov/obsidian-dev-toolkit -> markdownlint -> micromark-extension-math@3.1.0 (its newest release), which declares katex ^0.16.0, so no bump reaches the fix. The 0.x minor jump is safe because nothing here ever runs KaTeX: markdownlint imports only `math` (the micromark syntax extension) from micromark-extension-math, and katex is required solely by its `mathHtml` half, which markdownlint never loads. NEVER take the `npm audit fix --force` remedy: it downgrades the toolkit packages. Mirrors the same override in obsidian-file-bundles."
+    },
+    "glob": {
+      "check": "node -e \"const fs=require('node:fs');for(const p of ['@wdio/config','archiver-utils','linkinator'])console.log(JSON.parse(fs.readFileSync('node_modules/'+p+'/package.json','utf8')).dependencies.glob)\"",
+      "expect": "^10.2.2\n^10.0.0\n^13.0.0",
+      "manualCheck": "Remove the override when all three consumers admit >=14.0.2. Re-run npm audit, the project gate and a glob smoke of all three consumers.",
+      "section": "overrides",
+      "why": "Clears GHSA-3g3m-2fjr-6pw4 (AbortSignal cancellation bypass, glob >=9 <=14.0.1; patched 14.0.2). obsidian-integration-testing pins webdriverio 9.27.0, whose @wdio/config and archiver-utils still require glob ^10.2.2 and ^10.0.0, and linkinator 8.1.0 requires glob ^13.0.0. @wdio/config and archiver-utils call only the retained sync API, linkinator only the named async `glob`; glob 14 keeps both with its CommonJS build. No direct dependency update reaches the fix. NEVER take the `npm audit fix --force` remedy: it proposes downgrading obsidian-integration-testing to 1.1.2 and linkinator to 4.1.2. Mirrors the same override in obsidian-permanent-links."
+    },
+    "@microsoft/eslint-plugin-sdl": {
+      "check": "node -e \"const fs=require('node:fs');const path=['node_modules/eslint-plugin-obsidianmd/node_modules/@microsoft/eslint-plugin-sdl/package.json','node_modules/@microsoft/eslint-plugin-sdl/package.json'].find((candidate)=>fs.existsSync(candidate));process.stdout.write(JSON.parse(fs.readFileSync(path,'utf8')).dependencies['eslint-plugin-n'])\"",
+      "expect": "17.10.3",
+      "manualCheck": "Remove the override when sdl declares an eslint-plugin-n of 17.22 or later. Re-run npm audit and lint.",
+      "section": "overrides",
+      "why": "Scoped override: forces eslint-plugin-n ^17.24.0 under @microsoft/eslint-plugin-sdl only, to clear GHSA-g3hv-75wg-m249 (minimatch ReDoS, >=7.0.0 <11.0.1). sdl 1.1.0 (its latest, reached through obsidian-dev-toolkit -> eslint-plugin-obsidianmd) pins eslint-plugin-n 17.10.3, which depends on minimatch 9. eslint-plugin-n 17.24.0 is the same major and depends on no minimatch at all. Dev-only: lint tooling, never shipped in main.js. Mirrors the same override in obsidian-file-bundles."
     }
   }
 }
