@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 1.0.2
+
+This release has 1 fix and 3 documentation changes. 7 maintenance commits (tests, build, CI, refactoring, dependencies) are not listed.
+
+### Fixed
+
+- **test:** hold the test:coverage gate at 100%
+
+### Documentation
+
+- **agents:** record the community directory listing
+- **readme:** say the plugin is in the community directory
+- **changelog:** regroup the raw release notes for readers
+
 ## 1.0.1
 
 This release has 1 fix and 1 documentation change.
