@@ -13,6 +13,8 @@ const SAMPLE_BASE_PATH = 'Materials/01 Auto row height/Projects.base';
 
 const DEFAULT_MAX_ROWS = 500;
 
+const ROW_HEIGHT_LINE_REG_EXP = /^(?<indent>\s*)rowHeight:.*$/mu;
+
 /**
  * Opens the sample base, whose table view uses the Auto row height.
  *
@@ -25,6 +27,30 @@ export async function openSampleBase(app: App): Promise<void> {
     return;
   }
   await app.workspace.getLeaf(false).openFile(file);
+}
+
+/**
+ * Puts `maxRows` back to the value a fresh install starts with, so exploring the settings note leaves the
+ * vault as you found it.
+ *
+ * Manual equivalent: type `500` back into **Maximum rows**.
+ */
+export async function resetMaxRows(app: App): Promise<void> {
+  await setMaxRows(app, DEFAULT_MAX_ROWS);
+}
+
+/**
+ * Sets the most rows a table may have and still fit its rows to their content.
+ *
+ * `configureCommunityPlugin` routes through the plugin's own settings component while it is loaded, so the
+ * change applies live -- no window reload, and no writing `data.json` behind a running plugin's back, which
+ * it would overwrite from memory as it unloads.
+ *
+ * Manual equivalent: change **Maximum rows** in **Settings -> Community plugins -> `Bases Auto Row Height`**.
+ */
+export async function setMaxRows(app: App, maxRows: number): Promise<void> {
+  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { maxRows } });
+  new Notice(`maxRows is now ${String(maxRows)}. It is live -- no reload needed.`);
 }
 
 /**
@@ -41,31 +67,13 @@ export async function setRowHeight(app: App, rowHeight: '' | 'auto'): Promise<vo
     new Notice(`Could not find ${SAMPLE_BASE_PATH}.`);
     return;
   }
-  await app.vault.process(file, (content) => content.replace(/^(\s*)rowHeight:.*$/mu, `$1rowHeight: ${rowHeight === '' ? '""' : rowHeight}`));
+  const value = rowHeight === '' ? '""' : rowHeight;
+  await app.vault.process(file, (content) =>
+    content.replace(ROW_HEIGHT_LINE_REG_EXP, (line) => {
+      const indent = ROW_HEIGHT_LINE_REG_EXP.exec(line)?.groups?.['indent'] ?? '';
+      return `${indent}rowHeight: ${value}`;
+    })
+  );
   await openSampleBase(app);
   new Notice(`Row height is now ${rowHeight === '' ? 'Short' : 'Auto'}.`);
-}
-
-/**
- * Sets the most rows a table may have and still fit its rows to their content.
- *
- * `configureCommunityPlugin` routes through the plugin's own settings component while it is loaded, so the
- * change applies live -- no window reload, and no writing `data.json` behind a running plugin's back, which
- * it would overwrite from memory as it unloads.
- *
- * Manual equivalent: change **Maximum rows** in **Settings -> Community plugins -> Bases Auto Row Height**.
- */
-export async function setMaxRows(app: App, maxRows: number): Promise<void> {
-  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { maxRows } });
-  new Notice(`maxRows is now ${String(maxRows)}. It is live -- no reload needed.`);
-}
-
-/**
- * Puts `maxRows` back to the value a fresh install starts with, so exploring the settings note leaves the
- * vault as you found it.
- *
- * Manual equivalent: type `500` back into **Maximum rows**.
- */
-export async function resetMaxRows(app: App): Promise<void> {
-  await setMaxRows(app, DEFAULT_MAX_ROWS);
 }
