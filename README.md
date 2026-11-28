@@ -39,7 +39,8 @@ A copy of the vault ships with every release. You can access it via any of the f
 - **Auto row height** for every Bases table view, saved per view as `rowHeight: auto`. [01 Auto row height](<./demo-vault/01 Auto row height.md>)
 - **A table that still works like a table**: clicks, selection, the arrow keys, PageUp and PageDown and scrolling follow the real row heights. [01 Auto row height](<./demo-vault/01 Auto row height.md>)
 - **Late content followed**: a row grows when an image or other content in it renders after the table.
-- **No lock-in**: without the plugin, Obsidian reads `rowHeight: auto` as Short, so the base stays valid.
+- **Cell height per column**: a column can wrap in full or stop at 1, 2, 3 or 5 lines with an ellipsis, chosen from **Cell height** in its header menu and saved per view as `cellLines`. [03 Cell height](<./demo-vault/03 Cell height.md>)
+- **No lock-in**: without the plugin, Obsidian reads `rowHeight: auto` as Short and ignores `cellLines`, so the base stays valid.
 - **Every setting**, by the key it is stored under, including the `maxRows` cap for large tables. [02 Settings](<./demo-vault/02 Settings.md>)
 
 ## See also

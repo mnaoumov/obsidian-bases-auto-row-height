@@ -13,8 +13,14 @@ import type {
 } from 'obsidian';
 
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
-import { Events } from 'obsidian';
-import { App } from 'obsidian-test-mocks/obsidian';
+import {
+  Events,
+  Platform
+} from 'obsidian';
+import {
+  App,
+  Menu
+} from 'obsidian-test-mocks/obsidian';
 import {
   afterEach,
   beforeEach,
@@ -30,8 +36,13 @@ import {
   AUTO_ROW_HEIGHT_CLASS,
   AutoRowHeightComponent
 } from './auto-row-height-component.ts';
+import {
+  CELL_LINES_VARIABLE,
+  LINE_CLAMP_CLASS
+} from './cell-lines.ts';
 
 const BASE_ROW_HEIGHT = 30;
+const CELL_PROPERTIES = ['note.title', 'note.summary'];
 const NATIVE_RENDERED_ROWS = 2;
 
 interface FakeBasesCorePlugin {
@@ -46,6 +57,7 @@ interface FakeBasesPluginInstance {
 
 interface FakeCell {
   readonly el: HTMLElement;
+  readonly prop: string;
 }
 
 interface FakeCellPosition {
@@ -55,6 +67,7 @@ interface FakeCellPosition {
 
 interface FakeConfig {
   readonly get: (key: string) => unknown;
+  readonly set?: (key: string, value: unknown) => void;
 }
 
 interface FakeData {
@@ -70,6 +83,10 @@ interface FakeEntry {
 interface FakeGroup {
   readonly collapsed?: boolean;
   readonly entries: FakeEntry[];
+}
+
+interface FakeHeaderRow {
+  readonly cells: FakeCell[];
 }
 
 interface FakeRegistration {
@@ -99,6 +116,11 @@ interface Fixture {
   readonly registration: FakeRegistration;
   // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests change the row cap.
   settings: AutoRowHeightSettings;
+}
+
+interface StoredView {
+  readonly store: Record<string, unknown>;
+  readonly view: FakeTableView;
 }
 
 class FakeResizeObserver {
@@ -141,6 +163,7 @@ class FakeTableView {
   public readonly containerEl: HTMLElement;
   public data: FakeData | undefined;
   public groups: FakeTableGroup[] = [];
+  public readonly header: FakeHeaderRow;
   public isInDocument = false;
   public lastScroll: BasesTableScrollPosition = { left: 0, top: 0 };
   public minHeightDuringUpdate = '';
@@ -150,12 +173,21 @@ class FakeTableView {
   public selection: BasesTableSelection | null = null;
   public readonly selectionEl = createDiv('bases-table-selection');
   public shown = true;
+  public readonly theadEl: HTMLElement;
   public unusedRows: FakeRow[] = [];
   public updateCount = 0;
 
   public constructor(_controller: unknown, scrollEl: HTMLElement) {
     this.scrollEl = scrollEl;
     this.containerEl = scrollEl.createDiv('bases-table-container');
+    this.theadEl = this.containerEl.createDiv('bases-thead');
+    const headerRowEl = this.theadEl.createDiv('bases-tr');
+    this.header = { cells: CELL_PROPERTIES.map((prop) => ({ el: headerRowEl.createDiv('bases-td'), prop })) };
+  }
+
+  public getCellFromDom(el: HTMLElement): FakeCell | null {
+    const tdEl = el.closest('.bases-td');
+    return [...this.header.cells, ...this.rows.flatMap((row) => row.cells)].find((cell) => cell.el === tdEl) ?? null;
   }
 
   public getCellRect(index: FakeCellPosition): BasesTableRect {
@@ -192,7 +224,9 @@ class FakeTableView {
     const isPrint = this.containerEl.closest('.print') !== null;
     this.isInDocument = this.containerEl.closest('body') !== null;
     const height = BASE_ROW_HEIGHT * this.getRowHeightMult();
-    this.containerEl.empty();
+    for (const groupEl of this.containerEl.querySelectorAll(':scope > .bases-table')) {
+      groupEl.remove();
+    }
     this.containerEl.toggleClass('mod-multiline', this.getRowHeightMult() > 1);
     const previousRows = [...this.rows, ...this.unusedRows];
     this.rows = [];
@@ -234,7 +268,7 @@ class FakeTableView {
 
 function createRow(entry: FakeEntry): FakeRow {
   const el = createDiv('bases-tr');
-  const cells = [0, 1].map(() => {
+  const cells = CELL_PROPERTIES.map((prop) => {
     const tdEl = el.createDiv('bases-td');
     const cellEl = tdEl.createDiv('bases-table-cell');
     Object.defineProperties(tdEl, {
@@ -242,7 +276,7 @@ function createRow(entry: FakeEntry): FakeRow {
       offsetHeight: { configurable: true, get: () => el.style.getPropertyValue('--bases-table-row-height') === 'auto' ? entry.height : 0 }
     });
     Object.defineProperty(cellEl, 'offsetHeight', { configurable: true, get: () => Number(cellEl.dataset['height'] ?? entry.height) });
-    return { el: tdEl };
+    return { el: tdEl, prop };
   });
   return { cells, el, entry };
 }
@@ -650,6 +684,93 @@ describe('AutoRowHeightComponent', () => {
     expect(view.getRowHeightMult()).toBe(1);
   });
 
+  it('marks the cells of a clamped column with its line count, and clears the marks when the table leaves Auto', () => {
+    fixture.component.load();
+    const { store, view } = createStoredView({ cellLines: { 'note.summary': 2 }, rowHeight: 'auto' });
+    view.updateVirtualDisplay();
+    expect(clampMarks(view)).toStrictEqual([['', '2'], ['', '2']]);
+
+    store['cellLines'] = { 'note.summary': 3, 'note.title': 1 };
+    view.updateVirtualDisplay();
+    expect(clampMarks(view)).toStrictEqual([['1', '3'], ['1', '3']]);
+
+    store['rowHeight'] = '';
+    view.updateVirtualDisplay();
+    expect([...view.rows, ...view.unusedRows].map((row) => row.cells.map((cell) => cell.el.hasClass(LINE_CLAMP_CLASS)))).toStrictEqual([[false, false], [false, false]]);
+  });
+
+  it('adds a Cell height submenu to the column menu of an Auto table, and stores the line count chosen there', () => {
+    fixture.component.load();
+    const { store, view } = createStoredView({ cellLines: { 'note.summary': 2 }, rowHeight: 'auto' });
+    view.updateVirtualDisplay();
+
+    const summaryMenu = openHeaderMenu(view, 1);
+    expect(summaryMenu.sectionSubmenus__.get('action.cellHeight')).toStrictEqual({ icon: 'lucide-wrap-text', title: 'Cell height' });
+    expect(summaryMenu.menuItems__.map((item) => [item.section, item.title__, item.checked])).toStrictEqual([
+      ['action.cellHeight', 'Wrap in full', false],
+      ['action.cellHeight', '1 line', false],
+      ['action.cellHeight', '2 lines', true],
+      ['action.cellHeight', '3 lines', false],
+      ['action.cellHeight', '5 lines', false]
+    ]);
+
+    const titleMenu = openHeaderMenu(view, 0);
+    expect(titleMenu.menuItems__[0]?.checked).toBe(true);
+    const updateCount = view.updateCount;
+    titleMenu.menuItems__[1]?.onClick__?.(new MouseEvent('click'));
+    expect(store['cellLines']).toStrictEqual({ 'note.summary': 2, 'note.title': 1 });
+    expect(view.updateCount).toBe(updateCount + 1);
+    expect(clampMarks(view)[0]).toStrictEqual(['1', '2']);
+
+    openHeaderMenu(view, 0).menuItems__[0]?.onClick__?.(new MouseEvent('click'));
+    openHeaderMenu(view, 1).menuItems__[0]?.onClick__?.(new MouseEvent('click'));
+    expect(Object.hasOwn(store, 'cellLines')).toBe(false);
+  });
+
+  it('leaves the column menu alone when the core opened none, outside a header cell, and outside Auto', () => {
+    fixture.component.load();
+    const { store, view } = createStoredView({ rowHeight: 'auto' });
+    view.updateVirtualDisplay();
+    const forEventSpy = vi.spyOn(Menu, 'forEvent');
+
+    // The core listener did not open a menu, so the default is not prevented.
+    view.header.cells[0]?.el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    // A prevented event on the header row itself, which is no cell.
+    dispatchPrevented(view.theadEl);
+    // A text node target is no element.
+    const textNode = document.createTextNode('text');
+    view.theadEl.append(textNode);
+    dispatchPrevented(textNode);
+    expect(forEventSpy).not.toHaveBeenCalled();
+
+    store['rowHeight'] = '';
+    view.updateVirtualDisplay();
+    const headerCellEl = view.header.cells[0]?.el;
+    if (headerCellEl) {
+      dispatchPrevented(headerCellEl);
+    }
+    expect(forEventSpy).not.toHaveBeenCalled();
+  });
+
+  it('listens for a tap on the header on mobile', () => {
+    const isMobile = Platform.isMobile;
+    Platform.isMobile = true;
+    try {
+      fixture.component.load();
+      const { view } = createStoredView({ rowHeight: 'auto' });
+      view.updateVirtualDisplay();
+      const menu = Menu.create2__();
+      vi.spyOn(Menu, 'forEvent').mockReturnValueOnce(menu);
+      const event_ = new MouseEvent('click', { bubbles: true, cancelable: true });
+      event_.preventDefault();
+      view.header.cells[0]?.el.createDiv('bases-table-header-label').dispatchEvent(event_);
+      expect(Menu.forEvent).toHaveBeenCalledWith(event_);
+      view.onunload();
+    } finally {
+      Platform.isMobile = isMobile;
+    }
+  });
+
   it('forgets a view when it unloads', () => {
     fixture.component.load();
     const view = createView([{ entries: makeEntries(40, 70) }]);
@@ -713,8 +834,46 @@ describe('AutoRowHeightComponent', () => {
   });
 });
 
+function clampMarks(view: FakeTableView): string[][] {
+  return view.rows.map((row) => row.cells.map((cell) => cell.el.hasClass(LINE_CLAMP_CLASS) ? cell.el.style.getPropertyValue(CELL_LINES_VARIABLE) : ''));
+}
+
+function createStoredView(store: Record<string, unknown>): StoredView {
+  const view = createView([{ entries: makeEntries(40, 40) }]);
+  view.config = {
+    get: (key: string): unknown => store[key],
+    set: (key: string, value: unknown): void => {
+      if (value === null) {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- The fake config deletes a key the way the real one does.
+        delete store[key];
+      } else {
+        store[key] = value;
+      }
+    }
+  };
+  return { store, view };
+}
+
 function dispatchKey(view: FakeTableView, key: string, init: KeyboardEventInit, target: EventTarget = view.containerEl): void {
   target.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key, ...init }));
+}
+
+function dispatchPrevented(target: EventTarget): void {
+  const event_ = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+  // The core header cell prevents the default when it opens its menu.
+  event_.preventDefault();
+  target.dispatchEvent(event_);
+}
+
+function openHeaderMenu(view: FakeTableView, column: number): Menu {
+  const menu = Menu.create2__();
+  vi.spyOn(Menu, 'forEvent').mockReturnValueOnce(menu);
+  const cellEl = view.header.cells[column]?.el;
+  if (!cellEl) {
+    throw new Error(`No header cell ${String(column)}.`);
+  }
+  dispatchPrevented(cellEl.createDiv('bases-table-header-label'));
+  return menu;
 }
 
 // The view's own PageDown arithmetic, run right after the plugin's keydown listener, as the view's listener is.

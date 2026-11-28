@@ -8,6 +8,7 @@ import type {
 import type {
   App,
   BasesAllOptions,
+  BasesPropertyId,
   BasesViewConfig,
   QueryController
 } from 'obsidian';
@@ -18,9 +19,22 @@ import { MonkeyAroundComponent } from '@mnaoumov/obsidian-lib/components/monkey-
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
 import { InternalPluginName } from '@obsidian-typings/obsidian-public-latest/implementations';
+import {
+  Menu,
+  Platform
+} from 'obsidian';
 
+import type { CellLines } from './cell-lines.ts';
 import type { GroupRowTops } from './row-layout.ts';
 
+import {
+  CELL_LINE_CHOICES,
+  CELL_LINES_KEY,
+  CELL_LINES_VARIABLE,
+  LINE_CLAMP_CLASS,
+  parseCellLines,
+  withCellLines
+} from './cell-lines.ts';
 import {
   adjustCellRect,
   computeRowTops,
@@ -50,6 +64,8 @@ interface ViewState {
   containerHeight: number;
   // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- The pending frame is set and cleared as resizes come in.
   frame: number;
+  readonly headerMenuEvent: 'click' | 'contextmenu';
+  readonly headerMenuHandler: (event_: MouseEvent) => void;
   readonly keydownHandler: (event_: KeyboardEvent) => void;
   readonly observedCells: Set<HTMLElement>;
   readonly resizeObserver: ResizeObserver;
@@ -68,6 +84,9 @@ export const AUTO_ROW_HEIGHT = 'auto';
 export const AUTO_ROW_HEIGHT_CLASS = 'mod-auto-row-height';
 
 const AUTO_ROW_HEIGHT_LABEL = 'Auto';
+const CELL_HEIGHT_ICON = 'lucide-wrap-text';
+const CELL_HEIGHT_SECTION = 'action.cellHeight';
+const CELL_HEIGHT_TITLE = 'Cell height';
 const CELL_SELECTOR = ':scope > .bases-table-cell';
 const DEFAULT_GROUP_GAP_IN_PIXELS = 10;
 const MULTILINE_CLASS = 'mod-multiline';
@@ -78,6 +97,7 @@ const SIZE_TOLERANCE_IN_PIXELS = 0.5;
 // Half a row past the wanted count keeps Math.floor on the right side of a whole number.
 const FLOOR_MARGIN_IN_ROWS = 0.5;
 const TABLE_VIEW_TYPE = 'table';
+const WRAP_IN_FULL_LABEL = 'Wrap in full';
 
 /**
  * Adds `Auto` to the Row height of every Bases table view and lays such a table out by its content.
@@ -164,9 +184,11 @@ export class AutoRowHeightComponent extends ComponentEx {
       view.containerEl.win.cancelAnimationFrame(state.frame);
     }
     view.scrollEl.removeEventListener('keydown', state.keydownHandler, { capture: true });
+    view.theadEl.removeEventListener(state.headerMenuEvent, state.headerMenuHandler);
     view.containerEl.removeClass(AUTO_ROW_HEIGHT_CLASS);
     for (const row of [...view.rows, ...view.unusedRows]) {
       row.el.style.removeProperty(ROW_HEIGHT_VARIABLE);
+      markClampedCells(row, new Map());
     }
   }
 
@@ -177,9 +199,17 @@ export class AutoRowHeightComponent extends ComponentEx {
         this.handleKeydown(view, event_);
       };
       view.scrollEl.addEventListener('keydown', keydownHandler, { capture: true });
+      const headerMenuHandler = (event_: MouseEvent): void => {
+        this.handleHeaderMenu(view, event_);
+      };
+      // The core header cell opens its column menu on a right-click on desktop and on a tap on mobile.
+      const headerMenuEvent = Platform.isMobile ? 'click' : 'contextmenu';
+      view.theadEl.addEventListener(headerMenuEvent, headerMenuHandler);
       state = {
         containerHeight: 0,
         frame: 0,
+        headerMenuEvent,
+        headerMenuHandler,
         keydownHandler,
         observedCells: new Set(),
         resizeObserver: new ResizeObserver((entries) => {
@@ -209,6 +239,44 @@ export class AutoRowHeightComponent extends ComponentEx {
       state.frame = 0;
       view.updateVirtualDisplay();
     });
+  }
+
+  /**
+   * Adds the Cell height submenu to the column menu of an Auto table's header.
+   *
+   * The header cell opens its menu from its own listener, through `Menu.forEvent`, which keeps one menu per event
+   * and shows it on a timer. This listener sits on the header row, so it runs after that one, on the same event,
+   * and gets the same menu back.
+   *
+   * @param view - The table view.
+   * @param event_ - The `contextmenu` event on desktop, the `click` event on mobile.
+   */
+  private handleHeaderMenu(view: BasesTableView, event_: MouseEvent): void {
+    // The core listener prevents the default when it opens its menu, and only then.
+    const { targetNode } = event_;
+    if (!event_.defaultPrevented || !targetNode?.instanceOf(HTMLElement)) {
+      return;
+    }
+    // The listener sits on the header row, so the cell found is a header cell.
+    const cell = view.getCellFromDom(targetNode);
+    if (!cell) {
+      return;
+    }
+    const { prop } = cell;
+    const current = parseCellLines(view.config.get(CELL_LINES_KEY)).get(prop) ?? null;
+    const menu = Menu.forEvent(event_);
+    menu.setSectionSubmenu(CELL_HEIGHT_SECTION, { icon: CELL_HEIGHT_ICON, title: CELL_HEIGHT_TITLE });
+    for (const lines of [null, ...CELL_LINE_CHOICES]) {
+      menu.addItem((item) =>
+        item
+          .setSection(CELL_HEIGHT_SECTION)
+          .setTitle(lines === null ? WRAP_IN_FULL_LABEL : formatLineCount(lines))
+          .setChecked(lines === current)
+          .onClick(() => {
+            this.setCellLines(view, prop, lines);
+          })
+      );
+    }
   }
 
   private handleKeydown(view: BasesTableView, event_: KeyboardEvent): void {
@@ -263,6 +331,11 @@ export class AutoRowHeightComponent extends ComponentEx {
     const groupRows = groupedData.map((group) => view.isGroupCollapsed(group) ? [] : group.entries.map((entry) => rowsByEntry.get(entry)));
 
     // Write every row's auto height, then read every height, then write the layout, so the browser lays out once.
+    // A cell of a clamped column is marked first, so its row is measured at the clamped height.
+    const cellLines = parseCellLines(view.config.get(CELL_LINES_KEY));
+    for (const row of view.rows) {
+      markClampedCells(row, cellLines);
+    }
     for (const rows of groupRows) {
       for (const row of rows) {
         row?.el.setCssProps({ [ROW_HEIGHT_VARIABLE]: 'auto' });
@@ -369,6 +442,11 @@ export class AutoRowHeightComponent extends ComponentEx {
     this.refresh();
   }
 
+  private setCellLines(view: BasesTableView, property: BasesPropertyId, lines: null | number): void {
+    view.config.set(CELL_LINES_KEY, withCellLines(view.config.get(CELL_LINES_KEY), property, lines));
+    view.updateVirtualDisplay();
+  }
+
   private unpatch(): void {
     if (!this.patchComponent) {
       return;
@@ -448,9 +526,25 @@ function addAutoOption(options: BasesAllOptions[]): BasesAllOptions[] {
   });
 }
 
+function formatLineCount(lines: number): string {
+  return lines === 1 ? '1 line' : `${String(lines)} lines`;
+}
+
 function isEditableTarget(target: EventTarget | null): boolean {
   return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement
     || (target instanceof HTMLElement && target.isContentEditable);
+}
+
+function markClampedCells(row: BasesTableRow, cellLines: CellLines): void {
+  for (const cell of row.cells) {
+    const lines = cellLines.get(cell.prop);
+    cell.el.toggleClass(LINE_CLAMP_CLASS, lines !== undefined);
+    if (lines === undefined) {
+      cell.el.style.removeProperty(CELL_LINES_VARIABLE);
+    } else {
+      cell.el.style.setProperty(CELL_LINES_VARIABLE, String(lines));
+    }
+  }
 }
 
 function measureRow(row: BasesTableRow, minRowHeight: number): number {

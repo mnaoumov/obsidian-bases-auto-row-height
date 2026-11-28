@@ -1,13 +1,21 @@
 import type { App } from 'obsidian';
 
 import { configureCommunityPlugin } from '@mnaoumov/obsidian-lib/community-plugins';
-import { Notice } from 'obsidian';
+import {
+  Notice,
+  parseYaml,
+  stringifyYaml
+} from 'obsidian';
 
 // Shared code for every `code-button` in this vault, so each note's button stays a one-liner instead of a
 // Block copy-pasted across notes.
 //
 // The plugin id has to match `manifest.json` exactly: commands are keyed by it, and so is `data.json`.
 const PLUGIN_ID = 'bases-auto-row-height';
+
+interface BaseFile {
+  readonly views?: Record<string, unknown>[];
+}
 
 const SAMPLE_BASE_PATH = 'Materials/01 Auto row height/Projects.base';
 
@@ -76,4 +84,42 @@ export async function setRowHeight(app: App, rowHeight: '' | 'auto'): Promise<vo
   );
   await openSampleBase(app);
   new Notice(`Row height is now ${rowHeight === '' ? 'Short' : 'Auto'}.`);
+}
+
+/**
+ * Sets how many lines the `summary` column of the sample table shows, the way its column menu does: it writes
+ * the `cellLines` map of the table view in the base file, and the open table follows.
+ *
+ * Manual equivalent: open the base, right-click the **summary** column header (tap it on mobile), open
+ * **Cell height** and pick a line count, or **Wrap in full**.
+ *
+ * @param lines - The most lines a summary cell shows, or `null` to wrap it in full.
+ */
+export async function setSummaryLines(app: App, lines: null | number): Promise<void> {
+  const file = app.vault.getFileByPath(SAMPLE_BASE_PATH);
+  if (!file) {
+    new Notice(`Could not find ${SAMPLE_BASE_PATH}.`);
+    return;
+  }
+  await app.vault.process(file, (content) => {
+    const base = parseYaml(content) as BaseFile;
+    const view = base.views?.[0];
+    if (!view) {
+      return content;
+    }
+    const cellLines = { ...(view['cellLines'] as Record<string, number> | undefined) };
+    if (lines === null) {
+      delete cellLines['note.summary'];
+    } else {
+      cellLines['note.summary'] = lines;
+    }
+    if (Object.keys(cellLines).length === 0) {
+      delete view['cellLines'];
+    } else {
+      view['cellLines'] = cellLines;
+    }
+    return stringifyYaml(base);
+  });
+  await openSampleBase(app);
+  new Notice(lines === null ? 'The summary column wraps in full.' : `The summary column shows at most ${String(lines)} line(s).`);
 }
