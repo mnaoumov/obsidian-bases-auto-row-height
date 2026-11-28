@@ -77,12 +77,12 @@ describe('Plugin', () => {
     expect(Plugin.prototype).toBeInstanceOf(ObsidianPlugin);
   });
 
-  it('registers the report bug command and the open demo vault command', async () => {
+  it('registers the report bug, open demo vault and toggle Auto row height commands', async () => {
     const plugin = new Plugin(app, manifest);
     const addCommandSpy = vi.spyOn(plugin, 'addCommand');
     await plugin.onload();
     const ids = addCommandSpy.mock.calls.map(([command]) => command.id);
-    expect(ids.slice(ids.indexOf('report-bug'))).toStrictEqual(['report-bug', 'open-demo-vault']);
+    expect(ids.slice(ids.indexOf('report-bug'))).toStrictEqual(['report-bug', 'open-demo-vault', 'toggle-auto-row-height']);
   });
 
   it('lays tables out with the current row cap', async () => {
