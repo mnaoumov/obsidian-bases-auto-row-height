@@ -25,6 +25,7 @@ Every button in this vault also states its **manual equivalent**, so you learn t
 | --- | --- |
 | [01 Auto row height](<./01 Auto row height.md>) | Turning Auto on for a table view, and what changes when it is on. |
 | [02 Settings](<./02 Settings.md>) | Every setting, by the key it is stored under in `data.json`. |
+| [03 Cell height](<./03 Cell height.md>) | Letting one column wrap in full while another stops at a few lines. |
 
 ## Materials
 

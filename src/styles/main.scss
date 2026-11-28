@@ -19,3 +19,17 @@
   height: auto;
   min-height: 100%;
 }
+
+/* A column set to a number of lines shows that many lines of each cell, with an ellipsis at the cut, unless the
+   cell is being edited. The cell itself is capped too, so a list or rendered markdown stops at the same height. */
+.bases-table-container.mod-auto-row-height .bases-tbody .bases-td.mod-line-clamp:not(:focus-within) .bases-table-cell {
+  max-height: calc(var(--bases-auto-row-height-cell-lines) * 1lh);
+  overflow: hidden;
+}
+
+.bases-table-container.mod-auto-row-height .bases-tbody .bases-td.mod-line-clamp:not(:focus-within) .metadata-input-longtext {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--bases-auto-row-height-cell-lines);
+  overflow: hidden;
+}
