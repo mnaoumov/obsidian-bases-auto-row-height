@@ -91,7 +91,10 @@ const CELL_SELECTOR = ':scope > .bases-table-cell';
 const DEFAULT_GROUP_GAP_IN_PIXELS = 10;
 const MULTILINE_CLASS = 'mod-multiline';
 const PRINT_SELECTOR = '.print';
-const ROW_HEIGHT_KEY = 'rowHeight';
+/**
+ * The view option that holds the row height.
+ */
+export const ROW_HEIGHT_KEY = 'rowHeight';
 const ROW_HEIGHT_VARIABLE = '--bases-table-row-height';
 const SIZE_TOLERANCE_IN_PIXELS = 0.5;
 // Half a row past the wanted count keeps Math.floor on the right side of a whole number.

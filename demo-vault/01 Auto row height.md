@@ -33,6 +33,21 @@ await require('/demoSetup.ts').setRowHeight(app, 'auto');
 
 Manual equivalent: open [Projects](<./Materials/01 Auto row height/Projects.base>), click the view name at the top left, choose **Configure view**, and pick **Auto** under **Row height**.
 
+## Toggle it with a command
+
+The **`Bases Auto Row Height`: Toggle Auto row height** command switches the table view in front of you between Auto and the row height it had before, without opening the view options. Give it a hotkey in **Settings → Hotkeys** to flip a table with one key.
+
+```code-button
+---
+caption: Toggle Auto row height on the sample table
+---
+await require('/demoSetup.ts').toggleAutoRowHeight(app);
+```
+
+Press it twice: the first press goes to Auto, the second goes back. If the table was Tall before, it is Tall again. The command remembers that height until Obsidian restarts; with nothing remembered, it goes back to Short. It writes the same `rowHeight` line the view options write.
+
+Manual equivalent: open [Projects](<./Materials/01 Auto row height/Projects.base>), open the command palette, and run **`Bases Auto Row Height`: Toggle Auto row height**.
+
 ## What stays the same
 
 - **Short is the minimum.** A one-line row is exactly as tall as it is on Short.

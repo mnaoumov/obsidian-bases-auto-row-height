@@ -37,6 +37,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 ## What it does
 
 - **Auto row height** for every Bases table view, saved per view as `rowHeight: auto`. [01 Auto row height](<./demo-vault/01 Auto row height.md>)
+- **A command to toggle Auto**: **`Bases Auto Row Height`: Toggle Auto row height** switches the active table view between Auto and the row height it had before, so a hotkey can flip it without the view options. [01 Auto row height](<./demo-vault/01 Auto row height.md>)
 - **A table that still works like a table**: clicks, selection, the arrow keys, PageUp and PageDown and scrolling follow the real row heights. [01 Auto row height](<./demo-vault/01 Auto row height.md>)
 - **Late content followed**: a row grows when an image or other content in it renders after the table.
 - **Cell height per column**: a column can wrap in full or stop at 1, 2, 3 or 5 lines with an ellipsis, chosen from **Cell height** in its header menu and saved per view as `cellLines`. [03 Cell height](<./demo-vault/03 Cell height.md>)

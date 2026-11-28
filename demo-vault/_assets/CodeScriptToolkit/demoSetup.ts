@@ -19,6 +19,8 @@ interface BaseFile {
 
 const SAMPLE_BASE_PATH = 'Materials/01 Auto row height/Projects.base';
 
+const TOGGLE_COMMAND_ID = `${PLUGIN_ID}:toggle-auto-row-height`;
+
 const DEFAULT_MAX_ROWS = 500;
 
 const ROW_HEIGHT_LINE_REG_EXP = /^(?<indent>\s*)rowHeight:.*$/mu;
@@ -122,4 +124,18 @@ export async function setSummaryLines(app: App, lines: null | number): Promise<v
   });
   await openSampleBase(app);
   new Notice(lines === null ? 'The summary column wraps in full.' : `The summary column shows at most ${String(lines)} line(s).`);
+}
+
+/**
+ * Opens the sample base and runs the **Toggle Auto row height** command on its table view, which switches it
+ * between Auto and the row height it had before.
+ *
+ * Manual equivalent: open the base, open the command palette and run **`Bases Auto Row Height`: Toggle Auto row
+ * height**, or press the hotkey you gave it.
+ */
+export async function toggleAutoRowHeight(app: App): Promise<void> {
+  await openSampleBase(app);
+  if (!app.commands.executeCommandById(TOGGLE_COMMAND_ID)) {
+    new Notice('The toggle command is not available. Is the plugin enabled?');
+  }
 }

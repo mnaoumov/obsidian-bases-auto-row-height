@@ -10,6 +10,7 @@ import type { AutoRowHeightSettings } from './auto-row-height/auto-row-height-co
 import { AutoRowHeightComponent } from './auto-row-height/auto-row-height-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
+import { ToggleAutoRowHeightCommandHandler } from './toggle-auto-row-height-command-handler.ts';
 
 export class Plugin extends PluginBase {
   protected override async onloadImpl(): Promise<void> {
@@ -63,7 +64,8 @@ export class Plugin extends PluginBase {
         pluginId: this.manifest.id,
         pluginNoticeComponent: this.pluginNoticeComponent,
         pluginVersion: this.manifest.version
-      })
+      }),
+      new ToggleAutoRowHeightCommandHandler({ app: this.app })
     ]);
   }
 }
